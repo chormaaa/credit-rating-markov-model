@@ -4,10 +4,6 @@
 
 This project uses a discrete-time, absorbing Markov chain to investigate how corporate credit ratings evolve and how changes in transition probabilities affect long-horizon default risk. It then connects rating outcomes to an illustrative sterling corporate-bond valuation using UK gilt yields and GBP credit-spread benchmarks.
 
-The central question is **how sensitive are multi-year credit-risk estimates—and the associated bond-value proxies—to changes in annual rating transitions?**
-
-> **Scope:** An independent educational modelling exercise, not an issuer-level credit forecast or an arbitrage-free pricing model. Transition probabilities are adapted from published S&P Global Ratings data; stress scenarios and rating-specific GBP spreads are constructed within this project.
-
 ## Main findings
 
 The table below shows model-implied results for an issuer **initially rated BBB**. The temporary-stress scenario applies stressed transitions for the first two years, followed by the baseline matrix; persistent stress applies them throughout.
@@ -45,32 +41,6 @@ The script generates four figures in `figures/`.
 
 ![Conditional-on-survival rating heatmaps](figures/conditional_rating_distribution_5_10_years.png)
 
-## Running the project
-
-Requires **Python 3.9+**, **NumPy**, and **Matplotlib**. No external API key or internet connection is needed to run the analysis: the source transition percentages and the dated GBP market snapshot are recorded in the script.
-
-```bash
-python -m pip install -r requirements.txt
-python credit_markov.py
-```
-
-The script prints summary tables, checks the validity of the transition matrices, creates the `figures/` directory if needed, and saves four PNG files in that directory. `pathlib` is part of Python's standard library and does not require separate installation.
-
-### Repository structure
-
-```text
-.
-├── credit_markov.py
-├── README.md
-├── requirements.txt
-├── .gitignore
-└── figures/
-    ├── default_probability_by_rating.png
-    ├── baseline_vs_stressed_default.png
-    ├── transition_heatmaps_1_3_5_10_years.png
-    └── conditional_rating_distribution_5_10_years.png
-```
-
 ## Data sources and modelling inputs
 
 | Input | Value / coverage | Source or status |
@@ -91,7 +61,9 @@ The Bank of England figures are stored in the code rounded to three decimal plac
 
 Let $X_n$ be an issuer's credit rating at the end of year $n$. The model has eight states:
 
-$$\mathcal S=\{AAA,AA,A,BBB,BB,B,CCC/C,D\}.$$
+$$
+\mathcal{S}=\lbrace AAA,AA,A,BBB,BB,B,CCC/C,D \rbrace.
+$$
 
 The initial S&P table also includes `NR` (Not Rated). The program removes the `NR` destination, **renormalises each remaining row by its actual sum**, and adds a default row with $P_{DD}=1$. Consequently, default is absorbing and the model conditions each annual transition on not entering `NR`.
 
@@ -107,13 +79,12 @@ This construction assumes a **first-order, time-homogeneous Markov chain**: the 
 
 Partition the transition matrix as
 
-$$
-P =
-\begin{pmatrix}
+```math
+P = \begin{pmatrix}
 Q & R \\
 0 & 1
 \end{pmatrix}
-$$
+```
 
 where $Q$ contains transitions among seven non-default ratings and $R$ contains one-year transitions from those ratings to default. With $\mathbf 1$ denoting a vector of ones:
 
@@ -125,13 +96,39 @@ where $Q$ contains transitions among seven non-default ratings and $R$ contains 
 | Conditional hazard in year $n$ | $h_i(n)=f_i(n)/S_i(n-1)$ | Default during year $n$, given survival to its start |
 | Survivor rating mix | $\pi_{ij}(n)=(Q^n)_{ij}/S_i(n)$ | Probability of surviving in rating $j$, conditional on survival |
 
-The **fundamental matrix** is
+The fundamental matrix is
 
-$$N=(I-Q)^{-1}=\sum_{k=0}^{\infty}Q^k.$$
+$$
+N=(I-Q)^{-1}=\sum_{k=0}^{\infty}Q^k.
+$$
 
-Its entry $N_{ij}$ is the expected number of visits to rating $j$ before default, starting from $i$, **including time zero**. The script computes the mean $t=N\mathbf1$, second moment $m_2=(2N-I)t$, and standard deviation $\sqrt{m_2-t^2}$ of the time to default. It also finds each rating's model-implied median default time—the first integer year for which $F_i(n)\ge 0.5$—and verifies eventual absorption under the fitted matrix.
+Its entry $N_{ij}$ represents the expected number of visits to rating $j$ before default, starting from rating $i$, including time zero.
 
-These very long model-implied default times are mathematical consequences of the simplified absorbing chain, **not estimates of the lifetime of a real company**.
+The expected time to default is
+
+$$
+t=N\mathbf{1}.
+$$
+
+Here, $t_i$ is the expected time to default starting from rating $i$.
+
+The second moment of the time to default is
+
+$$
+m_2=(2N-I)t.
+$$
+
+Here, $(m_2)_i$ is the second moment of the time to default starting from rating $i$.
+
+The standard deviation of the time to default for each initial rating $i$ is
+
+$$
+\sigma_i=\sqrt{(m_2)_i-t_i^2}.
+$$
+
+The script also calculates the model-implied median time to default, defined as the first year for which $F_i(n)\geq 0.5$, and the eventual absorption probabilities.
+
+These long model-implied default times are consequences of the absorbing Markov-chain assumptions and should not be interpreted as predictions of actual company lifetimes.
 
 ## Stress testing
 
@@ -147,7 +144,7 @@ The program compares three scenarios for $n=5$ and $n=10$:
 
 The ordering matters: rating distributions are row vectors, so the two-year recession is applied **before** the remaining baseline years. All seven non-default starting ratings are reported, including percentage-point changes relative to baseline. These scenarios are deliberately hypothetical; the ×1.20 factor is **not a calibrated historical recession parameter**.
 
-## Sterling bond-value extension
+## Sterling Bond Valuation
 
 The bond example translates credit-rating outcomes into an illustrative **expected terminal value**, rather than attempting to price a specific traded bond.
 
@@ -207,9 +204,3 @@ The script compares these expected values for **all seven initial ratings**, at 
 4. **Spread calibration:** The seven GBP spreads are derived partly from the model's own defaults and anchored only to two broad MSCI indices. They are not seven observed rating-specific market quotes, and the calibration is not an independent validation of the default model.
 5. **Bond valuation:** Index option-adjusted spreads plus nominal gilt *par* yields provide a single-yield approximation, not a full term structure or issuer-specific valuation. Earlier coupons, interim defaults, recovery timing, taxes, liquidity and other contract features are omitted. In particular, the **Year 5 and Year 10 numbers are not present values today or directly comparable total returns**.
 6. **Data populations and pricing measure:** S&P's transition matrix covers global historical corporate issuers, whereas the bond inputs describe GBP markets at a single date. Historical default frequencies are not risk-neutral probabilities; the resulting weighted values are **scenario proxies**, not arbitrage-free market prices.
-
-## Takeaway
-
-The project illustrates how absorbing Markov chains connect **rating migration, survival, default timing and long-horizon sensitivity**. In the model, a temporary increase in downgrade/default transition weights raises future default probabilities even after the baseline mechanism resumes. Persistent stress produces larger changes, which also appear in the illustrative sterling bond-value calculations.
-
-The objective is to understand the model's mathematics, financial interpretation and limits—not to forecast defaults or recommend investment decisions.
