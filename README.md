@@ -107,7 +107,13 @@ This construction assumes a **first-order, time-homogeneous Markov chain**: the 
 
 Partition the transition matrix as
 
-$$P=\begin{pmatrix}Q&R\\0&1\end{pmatrix},$$
+$$
+P =
+\begin{pmatrix}
+Q & R \\
+0 & 1
+\end{pmatrix}
+$$
 
 where $Q$ contains transitions among seven non-default ratings and $R$ contains one-year transitions from those ratings to default. With $\mathbf 1$ denoting a vector of ones:
 
