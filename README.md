@@ -196,6 +196,22 @@ $$\mathbb E[V(X_n)\mid X_0=i]=(P_{\mathrm{scenario}}V)_i.$$
 
 The script compares these expected values for **all seven initial ratings**, at Years 5 and 10, under baseline, temporary, and persistent stress. The probabilities change between scenarios, while the gilt yields and rating-spread estimates are **held fixed**.
 
+## Running the Code
+
+Install the required Python libraries using:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Run the program with:
+
+```bash
+python credit_markov.py
+```
+
+The program prints the numerical results and saves four figures in the `figures/` folder.
+
 ## Limitations and interpretation
 
 1. **Markov and time-homogeneity assumptions:** Credit ratings alone do not fully describe an issuer's financial position, rating history, industry or economic environment. Constant annual baseline transitions are a simplification.
